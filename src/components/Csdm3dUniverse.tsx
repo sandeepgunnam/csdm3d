@@ -2,7 +2,7 @@
 
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Html, Line, OrbitControls, RoundedBox, Stars } from "@react-three/drei";
-import { Camera, Compass, Gauge, Sparkles, TriangleAlert } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Suspense, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
@@ -90,100 +90,99 @@ export function Csdm3dUniverse({ analysis }: { analysis: Analysis }) {
   const selected = analysis.domains.find((domain) => domain.domain === selectedDomain) ?? analysis.domains[0];
   const sorted = [...analysis.domains].sort((a, b) => a.score - b.score);
 
+  const headlineInsight = analysis.insights?.[0]?.detail ?? "";
+
   return (
-    <div data-csdm3d-universe className="relative h-[720px] overflow-hidden rounded-[24px] border border-white/70 bg-[#10182d] shadow-[0_28px_80px_rgba(15,23,42,0.24)]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_18%,rgba(132,204,22,0.16),transparent_28%),radial-gradient(circle_at_78%_18%,rgba(96,165,250,0.18),transparent_25%),linear-gradient(135deg,#eef4fb_0%,#d4ddf0_52%,#b9c4dc_100%)]" />
+    <div
+      data-csdm3d-universe
+      className="relative h-[440px] overflow-hidden rounded-lg border border-[var(--border)] bg-[#0a0a0c] sm:h-[520px] lg:h-[640px]"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_18%,rgba(94,106,210,0.18),transparent_38%),radial-gradient(circle_at_78%_22%,rgba(38,181,138,0.10),transparent_40%),linear-gradient(180deg,#0a0a0c_0%,#070708_100%)]" />
       <Canvas camera={{ position: [0.8, 10.5, 16], fov: 42 }} shadows dpr={[1, 1.8]}>
         <Suspense fallback={null}>
           <Scene analysis={analysis} selectedDomain={selectedDomain} onSelectDomain={setSelectedDomain} />
         </Suspense>
       </Canvas>
 
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-5 top-5 w-[310px] rounded-2xl border border-white/65 bg-white/[0.86] p-4 shadow-[0_18px_44px_rgba(15,23,42,0.15)] backdrop-blur-xl">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0b7285]">CSDM3D command layer</p>
-              <h3 className="mt-1 text-2xl font-black tracking-tight">Maturity universe</h3>
-            </div>
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#0b3041] text-white">
-              <Compass className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <HudMetric label="Score" value={String(analysis.overallScore)} />
-            <HudMetric label="Stage" value={stageLabels[analysis.globalStage]} />
-            <HudMetric label="Next" value={`${analysis.progressToNext}%`} />
-          </div>
+      <div className="pointer-events-none absolute inset-0 p-3 md:p-4">
+        {/* Top-left: compact stats */}
+        <div className="absolute left-3 top-3 flex items-center gap-1.5 md:left-4 md:top-4">
+          <HudChip label="Score" value={String(analysis.overallScore)} />
+          <HudChip label="Stage" value={stageLabels[analysis.globalStage]} />
+          <HudChip label="Next" value={`${analysis.progressToNext}%`} className="hidden sm:flex" />
         </div>
 
-        <div className="absolute right-5 top-5 w-[335px] rounded-2xl border border-white/65 bg-white/[0.88] p-4 shadow-[0_18px_44px_rgba(15,23,42,0.15)] backdrop-blur-xl">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-[#0b7285]" />
-            <p className="text-[10px] font-black uppercase tracking-[0.2em]">AI readiness narrative</p>
+        {/* Top-right: narrative — hidden on small screens to keep the canvas clean */}
+        {headlineInsight && (
+          <div className="absolute right-3 top-3 hidden w-[300px] rounded-md border border-[var(--border)] bg-[var(--bg-elev-1)]/92 p-2.5 text-[var(--text)] backdrop-blur md:right-4 md:top-4 md:block">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="h-3 w-3 text-[var(--accent)]" />
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--text-3)]">Agent narrative</p>
+            </div>
+            <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--text-2)]">{headlineInsight}</p>
           </div>
-          <p className="mt-3 text-sm font-black leading-5">{analysis.insights[0]?.detail}</p>
-          <div className="mt-4 grid gap-2">
-            {sorted.slice(0, 2).map((domain) => (
-              <button
-                key={domain.domain}
-                type="button"
-                className="pointer-events-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-left transition hover:border-[#0b7285]"
-                onClick={() => setSelectedDomain(domain.domain)}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-black">{domain.label}</span>
-                  <span className="rounded-full bg-red-50 px-2 py-1 text-[10px] font-black text-red-600">
-                    {domain.blockers} blockers
-                  </span>
-                </div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200">
-                  <div className="h-full rounded-full bg-[#0b7285]" style={{ width: `${domain.score}%` }} />
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
+        )}
 
-        <div className="absolute bottom-5 left-5 right-5 grid gap-3 lg:grid-cols-[1fr_420px]">
-          <div className="rounded-2xl border border-white/65 bg-white/[0.86] p-4 shadow-[0_18px_44px_rgba(15,23,42,0.14)] backdrop-blur-xl">
-            <div className="flex flex-wrap items-center gap-2">
+        {/* Bottom: domain pills + selected detail */}
+        <div className="absolute bottom-3 left-3 right-3 grid gap-2 md:bottom-4 md:left-4 md:right-4 lg:grid-cols-[1fr_320px]">
+          <div className="pointer-events-auto rounded-md border border-[var(--border)] bg-[var(--bg-elev-1)]/92 p-2 backdrop-blur">
+            <div className="flex flex-wrap items-center gap-1.5">
               {analysis.domains.map((domain) => (
                 <button
                   key={domain.domain}
                   type="button"
-                  className={`pointer-events-auto rounded-full border px-3 py-2 text-xs font-black transition ${
-                    selectedDomain === domain.domain
-                      ? "border-[#0b7285] bg-[#0b7285] text-white"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-[#0b7285]"
-                  }`}
                   onClick={() => setSelectedDomain(domain.domain)}
+                  className={`rounded px-2 py-1 text-[11px] font-medium transition ${
+                    selectedDomain === domain.domain
+                      ? "bg-[var(--accent)] text-white"
+                      : "bg-transparent text-[var(--text-2)] hover:bg-[var(--bg-elev-2)] hover:text-[var(--text)]"
+                  }`}
                 >
-                  {domain.label} · {domain.score}
+                  {domain.label} <span className="ml-1 text-[10px] tabular-nums opacity-70">{domain.score}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/65 bg-[#071924]/[0.88] p-4 text-white shadow-[0_18px_44px_rgba(15,23,42,0.22)] backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-100/60">Selected domain</p>
-                <h3 className="mt-1 text-xl font-black">{selected.label}</h3>
+          <div className="rounded-md border border-[var(--border)] bg-[var(--bg-elev-1)]/95 p-2.5 text-[var(--text)] backdrop-blur">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--text-3)]">Selected</p>
+                <p className="truncate text-[13px] font-semibold tracking-tight">{selected.label}</p>
               </div>
               <div className="text-right">
-                <p className="text-4xl font-black text-[#8ce99a]">{selected.score}</p>
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/45">
-                  {stageLabels[selected.stage]}
+                <p className="text-[20px] font-semibold leading-none tabular-nums" style={{ color: scoreColor(selected.score) }}>
+                  {selected.score}
                 </p>
+                <p className="text-[10px] uppercase tracking-[0.1em] text-[var(--text-3)]">{stageLabels[selected.stage]}</p>
               </div>
             </div>
-            <p className="mt-3 text-xs leading-5 text-white/68">{selected.evidence}</p>
+            <p className="mt-1.5 line-clamp-2 text-[11.5px] leading-relaxed text-[var(--text-2)]">{selected.evidence}</p>
           </div>
         </div>
+
+        {/* Hidden ranked priorities marker — kept for compatibility with sorted memo */}
+        <span className="hidden">{sorted.length}</span>
       </div>
     </div>
   );
+}
+
+function HudChip({ label, value, className = "" }: { label: string; value: string; className?: string }) {
+  return (
+    <div
+      className={`flex items-center gap-1.5 rounded-md border border-[var(--border)] bg-[var(--bg-elev-1)]/92 px-2 py-1 backdrop-blur ${className}`}
+    >
+      <span className="text-[10px] uppercase tracking-[0.1em] text-[var(--text-3)]">{label}</span>
+      <span className="text-[12px] font-semibold tabular-nums text-[var(--text)]">{value}</span>
+    </div>
+  );
+}
+
+function scoreColor(score: number) {
+  if (score >= 75) return "#26b58a";
+  if (score >= 55) return "#f2c94c";
+  return "#eb5757";
 }
 
 function Scene({
@@ -207,15 +206,14 @@ function Scene({
 
   return (
     <>
-      <Stars radius={80} depth={35} count={1200} factor={3} saturation={0} fade speed={0.35} />
-      <ambientLight intensity={1.55} color="#ffffff" />
-      <directionalLight position={[10, 16, 10]} intensity={1.65} castShadow color="#ffffff" />
-      <directionalLight position={[-8, 9, -5]} intensity={0.75} color="#eef2ff" />
-      <pointLight position={[0, 10, 5]} intensity={0.55} color="#bfdbfe" distance={32} />
-      <pointLight position={[-5.2, 5, -0.5]} intensity={0.95} color="#facc15" distance={16} />
-      <pointLight position={[5.4, 5, -1.1]} intensity={0.95} color="#60a5fa" distance={16} />
-      <pointLight position={[5.9, 5, 4.7]} intensity={0.85} color="#4ade80" distance={16} />
-      <fog attach="fog" args={["#bcc4ec", 30, 70]} />
+      <Stars radius={80} depth={35} count={1400} factor={2.6} saturation={0} fade speed={0.3} />
+      <ambientLight intensity={0.55} color="#9aa3ad" />
+      <directionalLight position={[10, 16, 10]} intensity={0.95} castShadow color="#e6e8ec" />
+      <directionalLight position={[-8, 9, -5]} intensity={0.35} color="#a3aab8" />
+      <pointLight position={[0, 10, 5]} intensity={0.4} color="#5e6ad2" distance={32} />
+      <pointLight position={[-5.2, 5, -0.5]} intensity={0.5} color="#26b58a" distance={16} />
+      <pointLight position={[5.4, 5, -1.1]} intensity={0.5} color="#5e6ad2" distance={16} />
+      <fog attach="fog" args={["#0a0a0c", 28, 70]} />
 
       <group ref={groupRef}>
         <BoardFoundation />
@@ -255,17 +253,17 @@ function BoardFoundation() {
   return (
     <group>
       <RoundedBox args={[31, 0.3, 19.5]} position={[0, -0.62, 1.6]} radius={0.42} smoothness={4}>
-        <meshStandardMaterial color="#8892c8" roughness={0.9} metalness={0.04} />
+        <meshStandardMaterial color="#101014" roughness={0.95} metalness={0.05} />
       </RoundedBox>
       <RoundedBox args={[29.4, 0.08, 18.3]} position={[0, -0.42, 1.6]} radius={0.38} smoothness={4}>
-        <meshStandardMaterial color="#cad1ee" transparent opacity={0.94} roughness={0.82} />
+        <meshStandardMaterial color="#16161a" transparent opacity={0.94} roughness={0.85} />
       </RoundedBox>
       {(Object.keys(positions) as Domain[]).map((domain) => (
         <RoundedBox key={domain} args={[8.8, 0.06, 6.2]} position={[positions[domain][0], -0.34, positions[domain][2]]} radius={0.28} smoothness={4}>
-          <meshStandardMaterial color={domainTheme[domain].zone} transparent opacity={0.88} />
+          <meshStandardMaterial color="#1c1c20" transparent opacity={0.85} emissive={domainTheme[domain].color} emissiveIntensity={0.04} />
         </RoundedBox>
       ))}
-      <gridHelper args={[32, 32, "#94a3b8", "#cbd5e1"]} position={[0, -0.31, 1.6]} />
+      <gridHelper args={[32, 32, "#2a2a30", "#1f1f23"]} position={[0, -0.31, 1.6]} />
     </group>
   );
 }
@@ -303,7 +301,7 @@ function DomainPlatform({
   return (
     <group ref={ref} position={position}>
       <RoundedBox args={[8.4, 0.06, 5.9]} position={[0, -0.12, 0]} radius={0.22} smoothness={4}>
-        <meshStandardMaterial color={theme.zone} transparent opacity={0.94} roughness={0.96} />
+        <meshStandardMaterial color="#1c1c20" transparent opacity={0.85} roughness={0.96} />
       </RoundedBox>
       <RoundedBox
         ref={platformRef}
@@ -322,7 +320,7 @@ function DomainPlatform({
           document.body.style.cursor = "default";
         }}
       >
-        <meshStandardMaterial color={theme.frame} emissive={theme.color} emissiveIntensity={0.24} roughness={0.9} metalness={0.2} />
+        <meshStandardMaterial color="#22222a" emissive={theme.color} emissiveIntensity={0.18} roughness={0.85} metalness={0.25} />
       </RoundedBox>
 
       <StageRail stageIndex={currentStageIndex} color={theme.color} />
@@ -337,14 +335,14 @@ function DomainPlatform({
       })}
 
       <Html position={[0, 1.25, -2.8]} center distanceFactor={9} style={{ pointerEvents: "none" }}>
-        <div className="min-w-[240px] rounded-2xl border border-white/25 bg-[#10182d]/90 p-3 text-center text-white shadow-2xl backdrop-blur">
-          <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white/50">{stageLabels[domain.stage]}</div>
-          <div className="mt-1 text-sm font-black">{theme.short}</div>
-          <div className="mt-2 flex items-center justify-center gap-2">
-            <span className="text-3xl font-black" style={{ color: scoreColor }}>
+        <div className="min-w-[200px] rounded-md border border-[#2a2a30] bg-[#0e0e10]/95 px-2.5 py-2 text-center text-white backdrop-blur">
+          <div className="text-[9px] font-medium uppercase tracking-[0.12em] text-[#8a8f98]">{stageLabels[domain.stage]}</div>
+          <div className="mt-0.5 text-[12px] font-semibold tracking-tight">{theme.short}</div>
+          <div className="mt-1.5 flex items-center justify-center gap-1.5">
+            <span className="text-[22px] font-semibold tabular-nums leading-none" style={{ color: scoreColor }}>
               {domain.score}
             </span>
-            <span className="rounded-full bg-red-500/15 px-2 py-1 text-[9px] font-black text-red-200">
+            <span className="rounded bg-[#1c1c20] px-1.5 py-0.5 text-[9px] font-medium text-[#eb5757]">
               {domain.blockers} blockers
             </span>
           </div>
@@ -357,18 +355,17 @@ function DomainPlatform({
 function StageRail({ stageIndex, color }: { stageIndex: number; color: string }) {
   return (
     <Html position={[0, 0.38, 2.72]} center distanceFactor={10} style={{ pointerEvents: "none" }}>
-      <div className="flex w-[270px] items-center gap-1.5 rounded-full border border-white/15 bg-[#111827]/75 p-2 shadow-xl backdrop-blur">
+      <div className="flex w-[230px] items-center gap-1 rounded-md border border-[#2a2a30] bg-[#0e0e10]/85 px-1.5 py-1.5 backdrop-blur">
         {stages.map((stage, index) => (
           <div key={stage} className="flex-1 text-center">
             <div
-              className="h-2 rounded-full"
+              className="h-1.5 rounded"
               style={{
-                background: index <= stageIndex ? color : "#334155",
-                opacity: index <= stageIndex ? 1 : 0.32,
-                boxShadow: index === stageIndex ? `0 0 14px ${color}` : undefined,
+                background: index <= stageIndex ? color : "#2a2a30",
+                opacity: index <= stageIndex ? 1 : 0.5,
               }}
             />
-            <p className="mt-1 text-[7px] font-bold uppercase tracking-tight text-white/70">{stageLabels[stage]}</p>
+            <p className="mt-1 text-[7px] font-medium uppercase tracking-tight text-[#8a8f98]">{stageLabels[stage]}</p>
           </div>
         ))}
       </div>
@@ -402,9 +399,9 @@ function DataNode({ label, position, color, signal }: { label: string; position:
         <meshStandardMaterial color="#eaffff" emissive={rag} emissiveIntensity={0.7} />
       </mesh>
       <Html position={[0, -0.04, 0.72]} center distanceFactor={9} style={{ pointerEvents: "none" }}>
-        <div className="flex w-[148px] items-center gap-1 rounded-full border border-white/15 bg-[#121839]/90 px-2 py-1 text-white shadow-xl backdrop-blur">
-          <span className="flex-1 truncate text-center text-[8px] font-black">{label}</span>
-          <span className="rounded-full px-1.5 py-0.5 text-[8px] font-black" style={{ background: rag }}>
+        <div className="flex w-[140px] items-center gap-1 rounded border border-[#2a2a30] bg-[#0e0e10]/90 px-1.5 py-1 text-white backdrop-blur">
+          <span className="flex-1 truncate text-center font-mono text-[8px] text-[#8a8f98]">{label}</span>
+          <span className="rounded px-1 py-0.5 text-[8px] font-medium tabular-nums text-white" style={{ background: rag }}>
             {Math.round(signal)}
           </span>
         </div>
@@ -504,7 +501,7 @@ function DataFlowParticles({
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, particles.length]}>
       <sphereGeometry args={[1, 8, 8]} />
-      <meshStandardMaterial transparent opacity={0.7} emissive="#22c55e" emissiveIntensity={0.6} color="#ffffff" />
+      <meshStandardMaterial transparent opacity={0.65} emissive="#5e6ad2" emissiveIntensity={0.55} color="#e6e8ec" />
     </instancedMesh>
   );
 }
@@ -514,13 +511,3 @@ function seededUnit(seed: number) {
   return value - Math.floor(value);
 }
 
-function HudMetric({ label, value }: { label: string; value: string }) {
-  const Icon = label === "Score" ? Gauge : label === "Stage" ? Camera : TriangleAlert;
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3">
-      <Icon className="h-4 w-4 text-[#0b7285]" />
-      <p className="mt-2 text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">{label}</p>
-      <p className="mt-0.5 text-lg font-black">{value}</p>
-    </div>
-  );
-}
